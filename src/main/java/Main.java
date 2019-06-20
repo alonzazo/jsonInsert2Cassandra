@@ -19,13 +19,12 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 public class Main {
     public static void main(String[] args){
         Cluster cluster = null;
-
         try {
             String tablename;
             String path;
 
             if (args.length == 1){
-                tablename = "metadata";
+                tablename = "review";
                 path = args[0];
             }
             else if (args.length == 2){
@@ -54,19 +53,20 @@ public class Main {
 
             JSONParser jsonParser = new JSONParser();
             progressCounter.start();
-
+            int i = 0;
             while (scanner1.hasNextLine()){
 
                 String lineLeft = scanner1.nextLine();
+                if(i > 5336){
+                    JSONObject rowLeft = (JSONObject) jsonParser.parse(lineLeft);
 
-                JSONObject rowLeft = (JSONObject) jsonParser.parse(lineLeft);
+                    String query = convertJsonToQuery(rowLeft, tablename);
 
-                String query = convertJsonToQuery(rowLeft, tablename);
-
-                session.execute(query);
-
-                progressCounter.advance(lineLeft.length());
-
+                    session.execute(query);
+                    System.out.println(i);
+                    progressCounter.advance(lineLeft.length());
+                }
+                i++;
             }
 
             progressCounter.finish();
@@ -82,30 +82,28 @@ public class Main {
 
     private static String convertJsonToQuery(JSONObject jsonObject, String tableName){
 
-        if (!jsonObject.containsKey("brand"))
-            jsonObject.put("brand","");
-/*        String reviewTime = jsonObject.get("reviewTime").toString();
+//        if (jsonObject.containsKey("helpful"))
+//            jsonObject.put("helpful","");
+       String reviewTime = jsonObject.get("reviewTime").toString();
 
         String year = reviewTime.substring(reviewTime.length()-4);
 
         jsonObject.put("year", year);
-*/
-        jsonObject.put("related","");
 
+//        jsonObject.put("related","");
 
-        JSONArray categoriesArray = (JSONArray) jsonObject.get("categories");
-        JSONArray categoriesExtended = new JSONArray();
-        for (int i = 0; i < categoriesArray.size(); i++){
-            if (categoriesArray.get(i) instanceof JSONArray) {
-                for (Object element : (JSONArray) categoriesArray.get(i))
-                    categoriesExtended.add(element);
-            }else {
-                categoriesExtended.add(categoriesArray.get(i));
-            }
-        }
-
-
-        jsonObject.put("categories",categoriesExtended);
+//
+//        JSONArray categoriesArray = (JSONArray) jsonObject.get("categories");
+//        JSONArray categoriesExtended = new JSONArray();
+//        for (int i = 0; i < categoriesArray.size(); i++){
+//            if (categoriesArray.get(i) instanceof JSONArray) {
+//                for (Object element : (JSONArray) categoriesArray.get(i))
+//                    categoriesExtended.add(element);
+//            }else {
+//                categoriesExtended.add(categoriesArray.get(i));
+//            }
+//        }
+//        jsonObject.put("categories",categoriesExtended);
 
         return "INSERT INTO " + tableName + " JSON '" + jsonObject.toJSONString().replace("\'","\\\"") + "';";
     }
