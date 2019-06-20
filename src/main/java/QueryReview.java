@@ -8,6 +8,8 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -47,8 +49,15 @@ public class QueryReview {
     public String getAvgProductYear(){
         BuiltStatement select = QueryBuilder.select().column("year").distinct().from(keyspace, "review");
         ResultSet rs =  session.execute(select);
+        ArrayList<String> years = new ArrayList();
         for(Row row: rs){
-
+            years.add(
+                    row.toString().substring(4, 8));
+        }
+        for(String year: years){
+            select = QueryBuilder.select().avg("overall")
+                    .from(keyspace, "review")
+                    .where();
         }
         return "";
     }
@@ -60,5 +69,6 @@ public class QueryReview {
     public static void main(String[] args){
         QueryReview queryReview = new QueryReview();
         System.out.println(queryReview.getAvgProductYear());
+        queryReview.closeConnection();
     }
 }
